@@ -16,75 +16,52 @@ import { RadioGroup } from '../radio-group';
 import { Separator } from '../separator';
 import { Text } from '../text';
 import clsx from 'clsx';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useOutsideClick } from 'src/hooks/useOutsideClick';
 
 type ArticleParamsFormProps = {
-	selectedFontFamily: OptionType;
-	setSelectedFontFamily: (option: OptionType) => void;
-	selectedFontSize: OptionType;
-	setSelectedFontSize: (option: OptionType) => void;
-	selectedFontColor: OptionType;
-	setSelectedFontColor: (option: OptionType) => void;
-	selectedBackgroundColor: OptionType;
-	setSelectedBackgroundColor: (option: OptionType) => void;
-	selectedContentWidth: OptionType;
-	setSelectedContentWidth: (option: OptionType) => void;
+	initialSettings: typeof defaultArticleState;
+	onApply: (settings: typeof defaultArticleState) => void;
 };
 
-export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
+export const ArticleParamsForm = ({
+	initialSettings,
+	onApply,
+}: ArticleParamsFormProps) => {
 	const [isOpen, setIsOpen] = useState(false);
+	const [settings, setSettings] = useState(initialSettings);
 
 	const toggleForm = () => {
 		setIsOpen(!isOpen);
 	};
 
-	const [tempFontFamily, setTempFontFamily] = useState<OptionType>(
-		props.selectedFontFamily
-	);
+	const formRef = useRef<HTMLDivElement>(null);
 
-	const [tempFontSize, setTempFontSize] = useState<OptionType>(
-		props.selectedFontSize
-	);
+	useOutsideClick(formRef, () => setIsOpen(false));
 
-	const [tempFontColor, setTempFontColor] = useState<OptionType>(
-		props.selectedFontColor
-	);
-
-	const [tempBackgroundColor, setTempBackgroundColor] = useState<OptionType>(
-		props.selectedBackgroundColor
-	);
-
-	const [tempContentWidth, setTempContentWidth] = useState<OptionType>(
-		props.selectedContentWidth
-	);
-
-	const handleApply = () => {
-		props.setSelectedFontFamily(tempFontFamily);
-		props.setSelectedFontSize(tempFontSize);
-		props.setSelectedFontColor(tempFontColor);
-		props.setSelectedBackgroundColor(tempBackgroundColor);
-		props.setSelectedContentWidth(tempContentWidth);
+	const handleChange = (name: string, value: OptionType) => {
+		setSettings((prevSettings) => ({
+			...prevSettings,
+			[name]: value,
+		}));
 	};
 
-	const resetArticleParams = () => {
-		setTempFontFamily(defaultArticleState.fontFamilyOption);
-		setTempFontSize(defaultArticleState.fontSizeOption);
-		setTempFontColor(defaultArticleState.fontColor);
-		setTempBackgroundColor(defaultArticleState.backgroundColor);
-		setTempContentWidth(defaultArticleState.contentWidth);
+	const handleApply = () => {
+		onApply(settings);
+		setIsOpen(false);
+	};
 
-		props.setSelectedFontFamily(defaultArticleState.fontFamilyOption);
-		props.setSelectedFontSize(defaultArticleState.fontSizeOption);
-		props.setSelectedFontColor(defaultArticleState.fontColor);
-		props.setSelectedBackgroundColor(defaultArticleState.backgroundColor);
-		props.setSelectedContentWidth(defaultArticleState.contentWidth);
+	const handleReset = () => {
+		setSettings(defaultArticleState);
+		onApply(defaultArticleState);
 	};
 
 	return (
 		<>
 			<ArrowButton isOpen={isOpen} onClick={toggleForm} />
 			<aside
-				className={clsx(styles.container, { [styles.container_open]: isOpen })}>
+				className={clsx(styles.container, { [styles.container_open]: isOpen })}
+				ref={formRef}>
 				<form
 					className={styles.form}
 					onSubmit={(e) => {
@@ -95,43 +72,39 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 						{'задайте параметры'}
 					</Text>
 					<Select
-						selected={tempFontFamily}
+						selected={settings.fontFamilyOption}
 						options={fontFamilyOptions}
 						title='шрифт'
-						onChange={setTempFontFamily}
+						onChange={(option) => handleChange('fontFamilyOption', option)}
 					/>
 					<RadioGroup
 						name='sizing'
-						selected={tempFontSize}
+						selected={settings.fontSizeOption}
 						options={fontSizeOptions}
 						title='размер шрифта'
-						onChange={setTempFontSize}
+						onChange={(option) => handleChange('fontSizeOption', option)}
 					/>
 					<Select
-						selected={tempFontColor}
+						selected={settings.fontColor}
 						options={fontColors}
 						title='цвет шрифта'
-						onChange={setTempFontColor}
+						onChange={(option) => handleChange('fontColor', option)}
 					/>
 					<Separator />
 					<Select
-						selected={tempBackgroundColor}
+						selected={settings.backgroundColor}
 						options={backgroundColors}
 						title='цвет фона'
-						onChange={setTempBackgroundColor}
+						onChange={(option) => handleChange('backgroundColor', option)}
 					/>
 					<Select
-						selected={tempContentWidth}
+						selected={settings.contentWidth}
 						options={contentWidthArr}
 						title='ширина контента'
-						onChange={setTempContentWidth}
+						onChange={(option) => handleChange('contentWidth', option)}
 					/>
 					<div className={styles.bottomContainer}>
-						<Button
-							title='Сбросить'
-							type='reset'
-							onClick={resetArticleParams}
-						/>
+						<Button title='Сбросить' type='reset' onClick={handleReset} />
 						<Button title='Применить' type='submit' />
 					</div>
 				</form>
